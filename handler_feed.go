@@ -10,17 +10,18 @@ import (
 	"github.com/google/uuid"
 )
 
-func handlerAddFeed(s *State, cmd Command) error {
+func handlerAddFeed(s *State, cmd Command, user database.User) error {
 	if len(cmd.Args) != 2 {
 		return errors.New("Requires two arguments")
 	}
-	name := s.Config.Username
-	user, err := s.db.GetUser(context.Background(), name)
+	params := database.CreateFeedParams{ID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now(), Name: cmd.Args[0], Url: cmd.Args[1], UserID: user.ID}
+	feed, err := s.db.CreateFeed(context.Background(), params)
 	if err != nil {
 		return err
 	}
-	params := database.CreateFeedParams{ID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now(), Name: cmd.Args[0], Url: cmd.Args[1], UserID: user.ID}
-	feed, err := s.db.CreateFeed(context.Background(), params)
+	fmt.Printf("feed.ID=%v user.ID=%v\n", feed.ID, user.ID)
+	feed_follow := database.CreateFeedFollowParams{ID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now(), UserID: user.ID, FeedID: feed.ID}
+	_, err = s.db.CreateFeedFollow(context.Background(), feed_follow)
 	if err != nil {
 		return err
 	}
